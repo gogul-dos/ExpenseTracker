@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     displayExpenses();
+    updateTotalExpense();
 });
 
 const form = document.querySelector(".form-container");
@@ -17,16 +18,22 @@ form.addEventListener("submit", function (event) {
         return;
     }
 
-    const expense = { category, amount, date };
-    
     let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-    expenses.push(expense);
+    const editIndex = form.getAttribute("data-edit-index");
+    if (editIndex !== null) {
+        expenses[editIndex] = { category, amount, date };
+        form.removeAttribute("data-edit-index");
+    } else {
+        expenses.push({ category, amount, date });
+    }
+
     localStorage.setItem("expenses", JSON.stringify(expenses));
 
     document.getElementById("amount").value = "";
     document.getElementById("date").value = "";
 
     displayExpenses();
+    updateTotalExpense();
 });
 
 function displayExpenses() {
@@ -40,10 +47,13 @@ function displayExpenses() {
             <p>${expense.category}</p>
             <p>$${expense.amount}</p>
             <p>${expense.date}</p>
-            <button onclick="deleteExpense(${index})">delete</button>
+            <button  onclick="editExpense(${index})">Edit</button>
+            <button onclick="deleteExpense(${index})">Delete</button>
         `;
         expenseList.appendChild(expenseItem);
     });
+
+    updateTotalExpense();
 }
 
 function deleteExpense(index) {
@@ -51,4 +61,23 @@ function deleteExpense(index) {
     expenses.splice(index, 1);
     localStorage.setItem("expenses", JSON.stringify(expenses));
     displayExpenses();
+    updateTotalExpense();
+}
+
+function editExpense(index) {
+    let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    let expense = expenses[index];
+
+    document.getElementById("category").value = expense.category;
+    document.getElementById("amount").value = expense.amount;
+    document.getElementById("date").value = expense.date;
+
+    form.setAttribute("data-edit-index", index);
+}
+
+function updateTotalExpense() {
+    let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+    let total = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+    
+    document.getElementById("total-expense").textContent = `Total Expense: $${total}`;
 }
